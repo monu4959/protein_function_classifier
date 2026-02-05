@@ -7,6 +7,8 @@ import torch.nn as nn
 import json
 import time
 from datetime import datetime
+import os
+import gdown
 
 # ============================================
 # CONFIGURATION
@@ -16,6 +18,34 @@ LABEL_MAPPING_PATH = 'label_mapping_full_2.json'
 MAX_SEQUENCE_LENGTH = 750
 MIN_SEQUENCE_LENGTH = 50
 VALID_AMINO_ACIDS = set('ACDEFGHIKLMNPQRSTVWY')
+
+# ============================================
+# AUTO-DOWNLOAD MODEL FROM GOOGLE DRIVE
+# ============================================
+GDRIVE_FILE_ID = '10YpLF2Q1pI5LCDornWvF9pZwjSdFPars'  # Replace with your actual Google Drive file ID
+
+if not os.path.exists(MODEL_PATH):
+    print("\n" + "="*60)
+    print("📥 MODEL NOT FOUND - DOWNLOADING FROM GOOGLE DRIVE")
+    print("="*60)
+    
+    try:
+        # Google Drive direct download URL
+        url = f'https://drive.google.com/uc?id={GDRIVE_FILE_ID}'
+        
+        print(f"Downloading from: {url}")
+        gdown.download(url, MODEL_PATH, quiet=False)
+        
+        print("✅ Model downloaded successfully!")
+        print(f"   Size: {os.path.getsize(MODEL_PATH) / (1024*1024):.2f} MB")
+        
+    except Exception as e:
+        print(f"❌ ERROR downloading model: {e}")
+        print("   Please ensure Google Drive link is public!")
+        print("   File ID should be from a shareable link")
+        raise
+else:
+    print(f"\n✅ Model found locally: {MODEL_PATH}")
 
 # ============================================
 # MODEL ARCHITECTURE (same as training)
@@ -422,7 +452,15 @@ async def global_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    print("\n🚀 Starting Protein Function Classifier API...")
-    print("📖 API documentation: http://localhost:8000/docs")
-    print("🔄 Alternative docs: http://localhost:8000/redoc")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    # Get port from environment variable (for cloud deployment)
+    port = int(os.environ.get("PORT", 8000))
+    
+    print("\n" + "="*60)
+    print("🚀 STARTING PROTEIN FUNCTION CLASSIFIER API")
+    print("="*60)
+    print(f"📖 Docs: http://localhost:{port}/docs")
+    print(f"🔄 Redoc: http://localhost:{port}/redoc")
+    print("="*60)
+    
+    uvicorn.run(app, host="0.0.0.0", port=port)
